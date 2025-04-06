@@ -63,20 +63,20 @@ fi
 
 # Check if we have a saved area
 if [ ! -f "$TEMP_FILE" ]; then
-	notify-send -u normal -t 5000 "🔲 Select your area" "Use your mouse to select the recording area."
+	notify-send -e -u normal -t 5000 "🔲 Select your area" "Use your mouse to select the recording area."
 	eval $(slop -c 255,0,0 -b 2 -n -f "geom=%wx%h pos=%x,%y") || exit 1
 	
 	# Is this a valid screen region or empty?
 	if [ -z "$geom" ] || [ -z "$pos" ]; then
 		echo "No valid screen region selected."
 		# Most likely the user aborted the selection
-		notify-send -u normal -t 5000 "❌ No area selected"
+		notify-send -e -u normal -t 5000 "❌ No area selected"
 		exit 0
 	fi
 	# Width and Height must both be greater than 4 pixels
 	if [ "${geom%%x*}" -le 4 ] || [ "${geom##*x}" -le 4 ]; then
 		echo "Width and Height must be greater than 4 pixels."
-		notify-send -u normal -t 5000 "❌ Width and Height must be greater than 4 pixels" "Please try again."
+		notify-send -e -u normal -t 5000 "❌ Width and Height must be greater than 4 pixels" "Please try again."
 		exit 0
 	fi
 	
@@ -87,7 +87,7 @@ if [ ! -f "$TEMP_FILE" ]; then
 	if [ "$1" == "-r" ]; then
 		echo "Starting recording instantly..."
 	else
-		notify-send -u normal -t 5000 "✅ Area Selected" "Run again to start recording."
+		notify-send -e -u normal -t 5000 "✅ Area Selected" "Run again to start recording."
 		echo "Run again to start recording."
 		exit 0
 	fi
@@ -118,15 +118,27 @@ yad --notification --image=media-record \
 	--command="kill $FFMPEG_PID" &
 
 # Show a notification
-notify-send -u normal -t 5000 "🔴 Recording started" "Click tray icon or run again to stop recording."
+notify-send -e -u normal -t 5000 "🔴 Recording started" "Click tray icon or run again to stop recording."
 
 # Wait for ffmpeg to finish
 wait $FFMPEG_PID
 
-# Notify that recording has stopped
-notify-send -t 10000 "💾 Recording stopped" "Saved to: $OUTFILE"
+# If clipboard is available, copy the file path
+#if command -v xclip >/dev/null 2>&1; then
+#	echo -n "file://$OUTFILE" | xclip -sel clip -t text/uri-list -i
+#else
+#	echo "xclip not found, file path not copied to clipboard."
+#fi
 
 # Cleanup
 rm -f "$PID_FILE"
 kill %yad 2>/dev/null
+
+# Notify that recording has stopped
+action=$(notify-send -w "💾 Recording stopped" "Saved to: $OUTFILE" --action=open="Open Location")
+if [ "$action" = "open" ]; then
+    xdg-open "$(dirname "$OUTFILE")"
+fi
+
+# Exit gracefully
 exit 0
