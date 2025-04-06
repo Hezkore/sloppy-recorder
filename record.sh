@@ -69,7 +69,8 @@ if [ ! -f "$TEMP_FILE" ]; then
 	# Is this a valid screen region or empty?
 	if [ -z "$geom" ] || [ -z "$pos" ]; then
 		echo "No valid screen region selected."
-		notify-send -u normal -t 5000 "❌ No valid screen region selected" "Please try again."
+		# Most likely the user aborted the selection
+		notify-send -u normal -t 5000 "❌ No area selected"
 		exit 0
 	fi
 	# Width and Height must both be greater than 4 pixels
