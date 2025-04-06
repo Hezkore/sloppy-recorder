@@ -8,6 +8,10 @@ Make sure you have the following dependencies installed:
 - `yad` for system tray icon
 - `notify-send` for notifications
 
+Optional dependencies:
+- `xclip` for copying video to clipboard after recording
+- `xdg-open` for opening the video directory after recording
+
 Once they're installed, you can clone this repo and make the `record.sh` script executable:
 ```bash
 chmod +x record.sh

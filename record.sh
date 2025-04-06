@@ -44,24 +44,24 @@ PID_FILE="/tmp/sloppy_record_pid"
 
 # Trap SIGINT (Ctrl+C) to clean up
 cleanup() {
-    echo "Cleaning up..."
-    if [ -n "$FFMPEG_PID" ]; then
-        echo "Stopping ffmpeg gracefully..."
-        echo "q" > "/proc/$FFMPEG_PID/fd/0" 2>/dev/null
-        wait "$FFMPEG_PID" 2>/dev/null
-    fi
-    [ -f "$TEMP_FILE" ] && rm -f "$TEMP_FILE"
+	echo "Cleaning up..."
+	if [ -n "$FFMPEG_PID" ]; then
+		echo "Stopping ffmpeg gracefully..."
+		echo "q" > "/proc/$FFMPEG_PID/fd/0" 2>/dev/null
+		wait "$FFMPEG_PID" 2>/dev/null
+	fi
+	[ -f "$TEMP_FILE" ] && rm -f "$TEMP_FILE"
 }
 trap cleanup SIGINT
 
 # Check if recording is already in progress
 if [ -f "$PID_FILE" ]; then
-    # Stop the recording
-    FFMPEG_PID=$(cat "$PID_FILE")
-    echo "Stopping recording with PID: $FFMPEG_PID"
-    kill -SIGINT "$FFMPEG_PID" 2>/dev/null
-    wait "$FFMPEG_PID" 2>/dev/null
-    exit 0
+	# Stop the recording
+	FFMPEG_PID=$(cat "$PID_FILE")
+	echo "Stopping recording with PID: $FFMPEG_PID"
+	kill -SIGINT "$FFMPEG_PID" 2>/dev/null
+	wait "$FFMPEG_PID" 2>/dev/null
+	exit 0
 fi
 
 # Check if we have a saved area
@@ -110,11 +110,11 @@ OUTFILE="$HOME/Videos/recording_$(date +%F_%H-%M-%S).mp4"
 
 # Start ffmpeg in background
 ffmpeg -f x11grab -framerate $FRAMERATE -video_size "$geom" -i :0.0+"$pos" \
-    -f pulse -i $AUDIO_SOURCE \
-    -c:v libx264 -preset $PRESET -crf $QUALITY -pix_fmt yuv420p \
-    -c:a aac -b:a 96k \
-    -movflags +faststart \
-    "$OUTFILE" &
+	-f pulse -i $AUDIO_SOURCE \
+	-c:v libx264 -preset $PRESET -crf $QUALITY -pix_fmt yuv420p \
+	-c:a aac -b:a 96k \
+	-movflags +faststart \
+	"$OUTFILE" &
 
 # Get the PID of the ffmpeg process
 FFMPEG_PID=$!
@@ -134,20 +134,25 @@ notify-send -e -u normal -t 5000 "🔴 Recording started" "Click tray icon or ru
 wait $FFMPEG_PID
 
 # If clipboard is available, copy the file path
-#if command -v xclip >/dev/null 2>&1; then
-#	echo -n "file://$OUTFILE" | xclip -sel clip -t text/uri-list -i
-#else
-#	echo "xclip not found, file path not copied to clipboard."
-#fi
+if command -v xclip >/dev/null 2>&1; then
+	echo -n "file://$OUTFILE" | xclip -sel clip -t text/uri-list -i
+else
+	echo "xclip not found, file path not copied to clipboard."
+fi
 
 # Cleanup
 rm -f "$PID_FILE"
 kill %yad 2>/dev/null
 
 # Notify that recording has stopped
-action=$(notify-send -w "💾 Recording stopped" "Saved to: $OUTFILE" --action=open="Open Location")
-if [ "$action" = "open" ]; then
-    xdg-open "$(dirname "$OUTFILE")"
+if command -v xdg-open >/dev/null 2>&1; then
+	action=$(notify-send -w "💾 Recording stopped" "Saved to: $OUTFILE" --action=open="Open Location")
+	if [ "$action" = "open" ]; then
+		xdg-open "$(dirname "$OUTFILE")"
+	fi
+else
+	notify-send -e -u normal -t 5000 "💾 Recording stopped" "Saved to: $OUTFILE"
+	echo "Recording stopped. Saved to: $OUTFILE"
 fi
 
 # Exit gracefully
