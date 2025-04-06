@@ -69,6 +69,9 @@ if [ ! -f "$TEMP_FILE" ]; then
 	notify-send -e -u normal -t 5000 "🔲 Select your area" "Use your mouse to select the recording area."
 	eval $(slop -c 255,0,0 -b 2 -n -f "geom=%wx%h pos=%x,%y") || exit 1
 	
+	# Adjust geometry to ensure width and height are divisible by 2
+	geom="$(( ${geom%%x*} & ~1 ))x$(( ${geom##*x} & ~1 ))"
+	
 	# Is this a valid screen region or empty?
 	if [ -z "$geom" ] || [ -z "$pos" ]; then
 		echo "No valid screen region selected."
@@ -108,8 +111,12 @@ OUTFILE="$HOME/Videos/recording_$(date +%F_%H-%M-%S).mp4"
 # Start ffmpeg in background
 ffmpeg -f x11grab -framerate $FRAMERATE -video_size "$geom" -i :0.0+"$pos" \
     -f pulse -i $AUDIO_SOURCE \
-    -c:v libx264 -preset $PRESET -crf $QUALITY  "$OUTFILE" \
-    -c:a aac -b:a 96k &
+    -c:v libx264 -preset $PRESET -crf $QUALITY -pix_fmt yuv420p \
+    -c:a aac -b:a 96k \
+    -movflags +faststart \
+    "$OUTFILE" &
+
+# Get the PID of the ffmpeg process
 FFMPEG_PID=$!
 
 # Save the PID to the PID file
