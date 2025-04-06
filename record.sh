@@ -50,6 +50,7 @@ cleanup() {
 		echo "q" > "/proc/$FFMPEG_PID/fd/0" 2>/dev/null
 		wait "$FFMPEG_PID" 2>/dev/null
 	fi
+	[ -f "$PID_FILE" ] && rm -f "$PID_FILE"
 	[ -f "$TEMP_FILE" ] && rm -f "$TEMP_FILE"
 }
 trap cleanup SIGINT
@@ -61,6 +62,7 @@ if [ -f "$PID_FILE" ]; then
 	echo "Stopping recording with PID: $FFMPEG_PID"
 	kill -SIGINT "$FFMPEG_PID" 2>/dev/null
 	wait "$FFMPEG_PID" 2>/dev/null
+	[ -f "$PID_FILE" ] && rm -f "$PID_FILE"
 	exit 0
 fi
 
@@ -68,9 +70,6 @@ fi
 if [ ! -f "$TEMP_FILE" ]; then
 	notify-send -e -u normal -t 5000 "🔲 Select your area" "Use your mouse to select the recording area."
 	eval $(slop -c 255,0,0 -b 2 -n -f "geom=%wx%h pos=%x,%y") || exit 1
-	
-	# Adjust geometry to ensure width and height are divisible by 2
-	geom="$(( ${geom%%x*} & ~1 ))x$(( ${geom##*x} & ~1 ))"
 	
 	# Is this a valid screen region or empty?
 	if [ -z "$geom" ] || [ -z "$pos" ]; then
@@ -85,6 +84,8 @@ if [ ! -f "$TEMP_FILE" ]; then
 		notify-send -e -u normal -t 5000 "❌ Width and Height must be greater than 4 pixels" "Please try again."
 		exit 0
 	fi
+	# Adjust geometry to ensure width and height are divisible by 2
+	geom="$(( ${geom%%x*} & ~1 ))x$(( ${geom##*x} & ~1 ))"
 	
 	# Save the selected area to the temporary file
 	echo "$geom $pos" > "$TEMP_FILE"
