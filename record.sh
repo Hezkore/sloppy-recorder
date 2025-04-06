@@ -44,21 +44,24 @@ PID_FILE="/tmp/sloppy_record_pid"
 
 # Trap SIGINT (Ctrl+C) to clean up
 cleanup() {
-	echo "Cleaning up..."
-	[ -n "$FFMPEG_PID" ] && kill "$FFMPEG_PID" 2>/dev/null
-	[ -f "$PID_FILE" ] && rm -f "$PID_FILE"
-	[ -f "$TEMP_FILE" ] && rm -f "$TEMP_FILE"
+    echo "Cleaning up..."
+    if [ -n "$FFMPEG_PID" ]; then
+        echo "Stopping ffmpeg gracefully..."
+        echo "q" > "/proc/$FFMPEG_PID/fd/0" 2>/dev/null
+        wait "$FFMPEG_PID" 2>/dev/null
+    fi
+    [ -f "$TEMP_FILE" ] && rm -f "$TEMP_FILE"
 }
 trap cleanup SIGINT
 
 # Check if recording is already in progress
 if [ -f "$PID_FILE" ]; then
-	# Stop the recording
-	FFMPEG_PID=$(cat "$PID_FILE")
-	echo "Stopping recording with PID: $FFMPEG_PID"
-	kill "$FFMPEG_PID" 2>/dev/null
-	rm -f "$PID_FILE"
-	exit 0
+    # Stop the recording
+    FFMPEG_PID=$(cat "$PID_FILE")
+    echo "Stopping recording with PID: $FFMPEG_PID"
+    kill -SIGINT "$FFMPEG_PID" 2>/dev/null
+    wait "$FFMPEG_PID" 2>/dev/null
+    exit 0
 fi
 
 # Check if we have a saved area
