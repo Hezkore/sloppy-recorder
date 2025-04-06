@@ -1,5 +1,5 @@
 # Sloppy Recorder
-A quick and dirty screen recorder for Linux using slop, ffmpeg, yad and notify-send.
+A quick and dirty screen recorder for Linux and X11 using slop, ffmpeg, yad and notify-send.
 
 # Installation & Usage
 Make sure you have the following dependencies installed:

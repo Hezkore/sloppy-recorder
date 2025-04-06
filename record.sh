@@ -3,11 +3,26 @@
 # Sloppy Recorder
 # By Hezkore
 
-# Some adjustable options
-QUALITY=25 # The CRF value for ffmpeg (lower is better quality but larger file size)
-FRAMERATE=30 # The frame rate for ffmpeg
-AUDIO_SOURCE="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor" # The audio source for ffmpeg
+# == OPTIONS ==
+
+# The CRF value for ffmpeg
+# Lower values mean better quality, but larger file size
+QUALITY=25
+
+# The preset for ffmpeg
+# Slower presets give better compression, but require more processing power
+# (ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow)
+PRESET="veryfast"
+
+# The frame rate for ffmpeg
+# Higher frame rates mean smoother video, but larger file size
+FRAMERATE=30
+
+# The audio source for ffmpeg
 # If the audio source is not working, try typing `pactl list sources short` in the terminal to find valid sources.
+AUDIO_SOURCE="alsa_output.pci-0000_00_1b.0.analog-stereo.monitor" 
+
+# == END OF OPTIONS ==
 
 # Dependency check
 missing=0
@@ -89,7 +104,7 @@ OUTFILE="$HOME/Videos/recording_$(date +%F_%H-%M-%S).mp4"
 # Start ffmpeg in background
 ffmpeg -f x11grab -framerate $FRAMERATE -video_size "$geom" -i :0.0+"$pos" \
     -f pulse -i $AUDIO_SOURCE \
-    -c:v libx264 -preset veryfast -crf $QUALITY "$OUTFILE" \
+    -c:v libx264 -preset $PRESET -crf $QUALITY  "$OUTFILE" \
     -c:a aac -b:a 96k &
 FFMPEG_PID=$!
 
